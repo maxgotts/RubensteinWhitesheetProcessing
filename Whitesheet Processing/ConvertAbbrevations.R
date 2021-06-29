@@ -11,10 +11,9 @@ library(rgdal)
 library(dplyr)
 library(ggpubr)
 
-ws <- read.csv("~/Desktop/MPALA/Whitesheets/Whitesheet\ Processing/Gotts_RawWhitesheets.csv")
+ws <- read.csv("/Users/maxgotts/Desktop/MPALA/Whitesheets/Whitesheet\ Processing/RawWhitesheets.csv")
 df <- filter(ws,!is.na(Whitesheet.Filename),!is.na(GPS.x),!is.na(GPS.y))
 df[,c("X", "X.1")] <- NULL
-
 
 ## USEFUL FUNCTIONS ##
 find_replace <- function(vec, dictionary) {
@@ -55,8 +54,10 @@ military_to_24 <- function(military) { # military is a number
 ####### GRASS ABBREVIATIONS #######
 
 ## Convert grass abbreviations to common names and flag unknown species
-abbr.pre6.16 <- read.csv("~/Desktop/MPALA/Whitesheets/Whitesheet\ Processing/SpeciesAbbreviations_pre6-16.csv")
-abbr.post6.16 <- read.csv("~/Desktop/MPALA/Whitesheets/Whitesheet\ Processing/SpeciesAbbreviations_post6-16.csv")
+abbr.pre6.16 <- read.csv("/Users/maxgotts/Desktop/MPALA/Whitesheets/Whitesheet\ Processing/SpeciesAbbreviations_pre6-16.csv")
+abbr.post6.16 <- read.csv("/Users/maxgotts/Desktop/MPALA/Whitesheets/Whitesheet\ Processing/SpeciesAbbreviations_post6-16.csv")
+
+
 
 grass_abbr <- function(string, date) {
   if (string == "") { return("") }
@@ -154,8 +155,27 @@ df$Wind <- find_replace(df$Wind,wind)
 
 
 ####### SPECIES ABBREVIATIONS #######
-species_abbr <- data.frame(x=c("GZ","PZ","Cattle","Cam","SH"),
-                           y=c("GZ","PZ","Cattle","Camel","Sheep"))
+species_abbr <- data.frame(x=c("GZ",
+                               "PZ",
+                               "Cattle",
+                               "Cam",
+                               "SH",
+                               "Mpala Cattle",
+                               "Community Cattle",
+                               "Zainab Camels",
+                               "Community Kaparo Cattle",
+                               "Community Camels"
+                               ),
+                           y=c("GZ",
+                               "PZ",
+                               "Cattle",
+                               "Camel",
+                               "Sheep",
+                               "MC",
+                               "CC",
+                               "ZC",
+                               "CKC",
+                               "Comm_Camel"))
 df$Species <- find_replace(df$Species,species_abbr)
 
 
@@ -257,11 +277,11 @@ df <- df[order(df$Photos.begin),]
 
 
 ####### WRITE OUT #######
-write.csv(df,paste0("~/Desktop/MPALA/Whitesheets/BACKUP/Gotts_ConvertedWhitesheets_",
+write.csv(df,paste0("/Users/maxgotts/Desktop/MPALA/Whitesheets/BACKUP/ConvertedWhitesheets_",
                         today(),".csv"), row.names=FALSE)
-write.csv(df,"~/Desktop/MPALA/Whitesheets/Gotts_ConvertedWhitesheets.csv", row.names=FALSE)
+write.csv(df,"/Users/maxgotts/Desktop/MPALA/Whitesheets/ConvertedWhitesheets.csv", row.names=FALSE)
 
 
 if (FALSE) {
-  source('~/Desktop/MPALA/Whitesheets/Whitesheet Processing/ConvertAbbrevations.R')
+  source('/Users/maxgotts/Desktop/MPALA/Whitesheets/Whitesheet Processing/ConvertAbbrevations.R')
 }

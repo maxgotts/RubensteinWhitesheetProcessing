@@ -7,7 +7,7 @@ rm(list=ls())
 library(dplyr)
 library(lubridate)
 
-ws <- read.csv("~/Desktop/MPALA/Whitesheets/Whitesheet\ Processing/Gotts_RawWhitesheets.csv")
+ws <- read.csv("~/Desktop/MPALA/Whitesheets/Whitesheet\ Processing/RawWhitesheets.csv")
 df <- filter(ws,!is.na(Whitesheet.Filename),!is.na(GPS.x),!is.na(GPS.y))
 df[,c("X", "X.1")] <- NULL
 
@@ -255,9 +255,9 @@ new_df <- new_df[order(new_df$Photos.begin),]
 
 
 ####### WRITE OUT #######
-write.csv(new_df,paste0("~/Desktop/MPALA/Whitesheets/BACKUP/Gotts_TransformedWhitesheets_",
+write.csv(new_df,paste0("~/Desktop/MPALA/Whitesheets/BACKUP/TransformedWhitesheets_",
                         today(),".csv"), row.names=FALSE)
-write.csv(new_df,"~/Desktop/MPALA/Whitesheets/Gotts_TransformedWhitesheets.csv", row.names=FALSE)
+write.csv(new_df,"~/Desktop/MPALA/Whitesheets/TransformedWhitesheets.csv", row.names=FALSE)
 
 
 if (FALSE) {
