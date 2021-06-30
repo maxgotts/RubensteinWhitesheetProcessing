@@ -245,6 +245,9 @@ df$Latitude <- as.double(df$Latitude)
 
 
 ####### NDVI & EVI #######
+df$NDVI <- NA
+df$EVI <- NA
+
 NDVI_raster <- stack("/Users/maxgotts/Desktop/MPALA/Maps/MODUS\ Data/6-3-6-18/MODUS_NDVI_6-3-6-18.tif")
 NDVI <- as.data.frame(NDVI_raster, xy = TRUE)
 colnames(NDVI) <- c("Longitude","Latitude","raw.NDVI")
@@ -259,14 +262,37 @@ EVI <- filter(EVI, !is.na(raw.EVI))
 EVI$EVI <- EVI$raw.EVI * .0001
 EVI$raw.EVI <- NULL
 
-df$NDVI <- NA
-df$EVI <- NA
 for (dazzle in 1:nrow(df)) {
   df[dazzle,"NDVI"] <- (NDVI %>% mutate("Distance" = ((Longitude - df$Longitude[dazzle])^2 + (Latitude - df$Latitude[dazzle])^2)) %>% 
-    arrange(Distance))[1,"NDVI"]
+                          arrange(Distance))[1,"NDVI"]
   df[dazzle,"EVI"] <- (EVI %>% mutate("Distance" = ((Longitude - df$Longitude[dazzle])^2 + (Latitude - df$Latitude[dazzle])^2)) %>% 
                           arrange(Distance))[1,"EVI"]
 }
+
+
+####### HABITAT #######
+df$Primary.habitat <- NA # Closest
+df$Secondary.habitat <- NA # Second-closest
+df$Tertiary.habitat <- NA # Furthest
+df$Distance.secondary <- NA # Distance to second-closest
+df$Distance.tertiary <- NA # Distance to furthest
+
+Habitat_raster <- stack("/Users/maxgotts/Desktop/MPALA/Maps/Habitat/Habitat_2021_06_30.tif")
+Habitat <- as.data.frame(Habitat_raster, xy = TRUE)
+colnames(Habitat) <- c("Longitude","Latitude","Habitat")
+Habitat <- filter(Habitat, !is.na(Habitat))
+
+for (dazzle in 1:nrow(df)) {
+  SortedHabitat <- Habitat %>% mutate("Distance" = ((Longitude - df$Longitude[dazzle])^2 + (Latitude - df$Latitude[dazzle])^2)) %>% 
+    arrange(Distance)
+  df[dazzle,"Primary.habitat"] <- SortedHabitat[1,"Habitat"]
+  df[dazzle,"Secondary.habitat"] <- SortedHabitat[2,"Habitat"]
+  df[dazzle,"Distance.secondary"] <- SortedHabitat[2,"Distance"]
+  df[dazzle,"Tertiary.habitat"] <- SortedHabitat[3,"Habitat"]
+  df[dazzle,"Distance.tertiary"] <- SortedHabitat[3,"Distance"]
+}
+
+
 
 
 
