@@ -178,6 +178,16 @@ species_abbr <- data.frame(x=c("GZ",
                                "Comm_Camel"))
 df$Species <- find_replace(df$Species,species_abbr)
 
+cattle.abbr <- c("Cattle","CKC","CC","MC")
+camel.abbr <- c("Camel","ZC","Comm_Camel")
+zebra.abbr <- c("GZ","PZ")
+df$QuickSpecies <- NA
+df[df$Species%in%cattle.abbr,"QuickSpecies"] <- "Cattle"
+# df[df$Species%in%zebra.abbr,"QuickSpecies"] <- "Zebra"
+df[df$Species%in%camel.abbr,"QuickSpecies"] <- "Camel"
+df[df$Species=="PZ","QuickSpecies"] <- "PZ"
+df[df$Species=="GZ","QuickSpecies"] <- "GZ"
+
 
 ####### EXTRACT DATE-TIME #######
 df$Year <- NA
@@ -277,7 +287,7 @@ df$Tertiary.habitat <- NA # Furthest
 df$Distance.secondary <- NA # Distance to second-closest
 df$Distance.tertiary <- NA # Distance to furthest
 
-Habitat_raster <- stack("/Users/maxgotts/Desktop/MPALA/Maps/Habitat/Habitat_2021_06_30.tif")
+Habitat_raster <- stack("/Users/maxgotts/Desktop/MPALA/Maps/Habitat/Habitat_2021_06_30_clipped.tif")
 Habitat <- as.data.frame(Habitat_raster, xy = TRUE)
 colnames(Habitat) <- c("Longitude","Latitude","Habitat")
 Habitat <- filter(Habitat, !is.na(Habitat))
@@ -292,14 +302,18 @@ for (dazzle in 1:nrow(df)) {
   df[dazzle,"Distance.tertiary"] <- SortedHabitat[3,"Distance"]
 }
 
+bush <- data.frame(inp=0:3,out=c(NA,"OB","LB","MB"))
 
-
-
+df$Primary.habitat <- find_replace(df$Primary.habitat, bush)
+df$Secondary.habitat <- find_replace(df$Secondary.habitat, bush)
+df$Tertiary.habitat <- find_replace(df$Tertiary.habitat, bush)
 
 
 
 ####### ORDER CSV #######
 df <- df[order(df$Photos.begin),]
+
+
 
 
 ####### WRITE OUT #######
