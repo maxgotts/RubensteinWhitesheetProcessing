@@ -2,7 +2,10 @@ rm(list=ls())
 
 
 
+
 ## SETUP ##
+
+source('~/Desktop/MPALA/mpala.R')
 
 library(dplyr)
 library(lubridate)
@@ -16,28 +19,6 @@ df <- filter(ws,!is.na(Whitesheet.Filename),!is.na(GPS.x),!is.na(GPS.y))
 df[,c("X", "X.1")] <- NULL
 
 ## USEFUL FUNCTIONS ##
-find_replace <- function(vec, dictionary) {
-  new_vec <- rep(NA,times=length(vec))
-  for (vid in 1:length(vec)) {
-    v <- vec[vid]
-    found <- FALSE
-    for (entry in 1:nrow(dictionary)) {
-      if (v == "") {
-        new_vec[vid] <- ""
-        found <- TRUE
-      }
-      if (v == dictionary[entry,1]) {
-        new_vec[vid] <- dictionary[entry,2]
-        found <- TRUE
-      }
-    }
-    if (!found) {
-      cat("Warning: `",v,"` not found in supplied dictionary, returned without changing\n",sep="")
-      new_vec[vid] <- v
-    }
-  }
-  return(new_vec)
-}
 
 military_to_24 <- function(military) { # military is a number
   military_time <- paste0(military)
@@ -113,44 +94,49 @@ df$Grass.spp.3 <- grasses_abbr(df$Grass.spp.3,df$Date)
 df$Grass.spp.4 <- grasses_abbr(df$Grass.spp.4,df$Date)
 
 
-
+cat("Grass abbreviations done\n")
 
 
 ####### GRASS COLOUR ABBREVIATIONS #######
 grass_colour <- data.frame(x=c("B","BG","GB","G"),
                            y=c("brown","brown with some green","green with some brown","green"))
 df$Grass.color <- find_replace(df$Grass.color,grass_colour)
+cat("Grass colours done\n")
 
 
 ####### BUSH TYPE ABBREVIATIONS #######
 bush_type <- data.frame(x=c("LB","MB","TB","OG","LB,MB"),
                         y=c("light","medium", "thick","open grassland","medium"))
 df$Bush.type <- find_replace(df$Bush.type,bush_type)
+cat("Bush type done\n")
 
 
 ####### ACTIVITY ABBREVIATIONS #######
 activity <- data.frame(x=c("St", "Wa", "Gr", "Dr", "Re"),
                        y=c("Standing", "Walking", "Grazing", "Drinking", "Resting"))
 df$Activity <- find_replace(df$Activity,activity)
+cat("Activity done\n")
 
 
 ####### RAIN ABBREVIATIONS #######
 rain <- data.frame(x=c("NR","LR","HR"),
                    y=c("no rain","light","heavy"))
 df$Rain <- find_replace(df$Rain,rain)
-
+cat("Rain done\n")
 
 
 ####### SUN ABBREVIATIONS #######
 sun <- data.frame(x=c("FS","PS","NS"),
                   y=c("full","part","no sun"))
 df$Sun <- find_replace(df$Sun,sun)
+cat("Sun done\n")
 
 
 ####### WIND ABBREVIATIONS #######
 wind <- data.frame(x=c("NW","LW","MW", "SW"),
                    y=c("no wind","light","medium", "strong"))
 df$Wind <- find_replace(df$Wind,wind)
+cat("Wind done\n")
 
 
 
@@ -178,16 +164,16 @@ species_abbr <- data.frame(x=c("GZ",
                                "Comm_Camel"))
 df$Species <- find_replace(df$Species,species_abbr)
 
-cattle.abbr <- c("Cattle","CKC","CC","MC")
-camel.abbr <- c("Camel","ZC","Comm_Camel")
-zebra.abbr <- c("GZ","PZ")
+# cattle.abbr <- c("Cattle","CKC","CC","MC")
+# camel.abbr <- c("Camel","ZC","Comm_Camel")
+# zebra.abbr <- c("GZ","PZ")
 df$QuickSpecies <- NA
 df[df$Species%in%cattle.abbr,"QuickSpecies"] <- "Cattle"
 # df[df$Species%in%zebra.abbr,"QuickSpecies"] <- "Zebra"
 df[df$Species%in%camel.abbr,"QuickSpecies"] <- "Camel"
 df[df$Species=="PZ","QuickSpecies"] <- "PZ"
 df[df$Species=="GZ","QuickSpecies"] <- "GZ"
-
+cat("Species & QuickSpecies done\n")
 
 ####### EXTRACT DATE-TIME #######
 df$Year <- NA
@@ -204,6 +190,7 @@ for (dazzle in 1:nrow(df)) {
   df[dazzle,"Hour"] <- hour(t)
   df[dazzle,"Minute"] <- minute(t)
 }
+cat("Extract time done\n")
 
 
 
@@ -223,17 +210,11 @@ for (dazzle in 1:nrow(df)) {
 }
 df$Other.species <- NULL
 
+cat("Split other species done\n")
 
 ####### NUMBER OF GRASS SPECIES #######
 df$Number.grasses <- (df$Grass.spp.1!="")+(df$Grass.spp.2!="")+(df$Grass.spp.3!="")+(df$Grass.spp.4!="")
-
-
-####### CONVERT NA TO "" #######
-for (coln in colnames(df)) {
-  column <- df[,coln]
-  column[is.na(column)]<-""
-  df[,coln] <- column
-}
+cat("Total other species done\n")
 
 
 ####### REMOVE EXTRANEOUS #######
@@ -243,20 +224,120 @@ df$Distance <- NULL
 df$Direction <- NULL
 df$Corrected.GPS.x <- NULL
 df$Corrected.GPS.y <- NULL
+cat("Remove extraneous columns done\n")
 
 
 ####### TOTAL ANIMALS #######
 colnames(df)[23] <- "Total.animals"
+cat("Total.zebras renamed\n")
 
 
 ####### CONVERT LAT/LONG TO NUMERIC #######
 df$Longitude <- as.double(df$Longitude)
 df$Latitude <- as.double(df$Latitude)
+cat("Long/Lat to numeric done\n")
 
 
-####### NDVI & EVI #######
+####### HABITAT, NDVI, EVI #######
+df$Primary.habitat <- NA # Closest
+df$Secondary.habitat <- NA # Second-closest
+df$Tertiary.habitat <- NA # Furthest
+df$Distance.secondary <- NA # Distance to second-closest
+df$Distance.tertiary <- NA # Distance to furthest
 df$NDVI <- NA
 df$EVI <- NA
+
+Habitat <- read.csv("/Users/maxgotts/Desktop/MPALA/Maps/Habitat/Habitat.csv")
+
+for (dazzle in 1:nrow(df)) {
+  SortedHabitat <- Habitat %>% mutate("Distance" = ((Longitude - df$Longitude[dazzle])^2 + (Latitude - df$Latitude[dazzle])^2)) %>% 
+    arrange(Distance)
+  df[dazzle,"Primary.habitat"] <- SortedHabitat[1,"Habitat"]
+  df[dazzle,"Secondary.habitat"] <- SortedHabitat[2,"Habitat"]
+  df[dazzle,"Distance.secondary"] <- SortedHabitat[2,"Distance"]
+  df[dazzle,"Tertiary.habitat"] <- SortedHabitat[3,"Habitat"]
+  df[dazzle,"Distance.tertiary"] <- SortedHabitat[3,"Distance"]
+  df[dazzle,"NDVI"] <- SortedHabitat[1,"NDVI"]
+  df[dazzle,"EVI"] <- SortedHabitat[1,"EVI"]
+}
+cat("Habitat, NDVI, and EVI done\n")
+
+
+
+####### DISTANCE TO MOB #######
+df$Distance.from.cattle <- NULL
+
+
+
+df$Distance.to.mob <- NA
+df$Closest.mob.size <- NA
+days <- 3
+
+mobs <- filter(df, Species%in%cattle.abbr)
+for (dazzle in 1:nrow(df)) {
+  if (!(df[dazzle,"Species"]%in%zebra.abbr)) next
+  mob.s <- mobs
+  mob.s$DaysTillZebra <- time_length(interval(mdy(mob.s$Date),mdy(df[dazzle,"Date"])),"day")
+    # + => cattle are before zebras; - => cattle are after after zebras
+  mob.s <- filter(mob.s, DaysTillZebra<=days, DaysTillZebra>=0)
+  
+  if (nrow(mob.s) == 0) {
+    df[dazzle,"Distance.to.mob"] <- NA #1
+    df[dazzle,"Closest.mob.size"] <- NA
+    next
+  }
+  
+  mob.s.arr <- mob.s %>% mutate("Distance" = ((Longitude - df$Longitude[dazzle])^2 + (Latitude - df$Latitude[dazzle])^2)) %>%
+    arrange(Distance)
+  df[dazzle,"Distance.to.mob"] <- mob.s.arr[1,"Distance"]
+  df[dazzle,"Closest.mob.size"] <- mob.s.arr[1,"Total.animals"]
+}
+df$Scaled.mob.size <- df$Closest.mob.size/(df$Distance.to.mob+1e-10)
+cat("Distance to mob etc. done\n")
+
+
+
+####### CONVERT NA TO "" #######
+for (coln in colnames(df)) {
+  column <- df[,coln]
+  column[is.na(column)]<-""
+  df[,coln] <- column
+}
+cat("NA to empty string done\n")
+
+
+####### ORDER CSV #######
+df <- df %>% arrange(Photos.begin) 
+cat("Data frame ordered\n")
+
+
+
+
+####### WRITE OUT #######
+cat("Writing...\n")
+
+write.csv(df,paste0("/Users/maxgotts/Desktop/MPALA/Whitesheets/BACKUP/ConvertedWhitesheets_",
+                        today(),".csv"), row.names=FALSE)
+write.csv(df,"/Users/maxgotts/Desktop/MPALA/Whitesheets/ConvertedWhitesheets.csv", row.names=FALSE)
+
+
+if (FALSE) {
+  source('/Users/maxgotts/Desktop/MPALA/Whitesheets/Whitesheet Processing/ConvertAbbrevations.R')
+}
+
+
+
+
+########################################################################################################
+
+
+
+
+
+
+###### DELETED NDVI, HABITAT CODE ######
+# df$NDVI <- NA
+# df$EVI <- NA
 
 # NDVI_raster <- stack("/Users/maxgotts/Desktop/MPALA/Maps/MODUS\ Data/6-3-6-18/MODUS_NDVI_6-3-6-18.tif")
 # NDVI <- as.data.frame(NDVI_raster, xy = TRUE)
@@ -271,59 +352,27 @@ df$EVI <- NA
 # EVI <- filter(EVI, !is.na(raw.EVI))
 # EVI$EVI <- EVI$raw.EVI * .0001
 # EVI$raw.EVI <- NULL
-VI <- read.csv("/Users/maxgotts/Desktop/MPALA/Maps/MODUS Data/VegIndex.csv")
-
-
-for (dazzle in 1:nrow(df)) {
-  vi.arr <- VI %>% mutate("Distance" = ((Longitude - df$Longitude[dazzle])^2 + (Latitude - df$Latitude[dazzle])^2)) %>% 
-    arrange(Distance)
-  df[dazzle,"NDVI"] <- vi.arr[1,"NDVI"]
-  df[dazzle,"EVI"] <- vi.arr[1,"EVI"]
-}
-
-
-####### HABITAT #######
-df$Primary.habitat <- NA # Closest
-df$Secondary.habitat <- NA # Second-closest
-df$Tertiary.habitat <- NA # Furthest
-df$Distance.secondary <- NA # Distance to second-closest
-df$Distance.tertiary <- NA # Distance to furthest
-
-Habitat_raster <- stack("/Users/maxgotts/Desktop/MPALA/Maps/Habitat/Habitat_2021_06_30_clipped.tif")
-Habitat <- as.data.frame(Habitat_raster, xy = TRUE)
-colnames(Habitat) <- c("Longitude","Latitude","Habitat")
-Habitat <- filter(Habitat, !is.na(Habitat))
-
-for (dazzle in 1:nrow(df)) {
-  SortedHabitat <- Habitat %>% mutate("Distance" = ((Longitude - df$Longitude[dazzle])^2 + (Latitude - df$Latitude[dazzle])^2)) %>% 
-    arrange(Distance)
-  df[dazzle,"Primary.habitat"] <- SortedHabitat[1,"Habitat"]
-  df[dazzle,"Secondary.habitat"] <- SortedHabitat[2,"Habitat"]
-  df[dazzle,"Distance.secondary"] <- SortedHabitat[2,"Distance"]
-  df[dazzle,"Tertiary.habitat"] <- SortedHabitat[3,"Habitat"]
-  df[dazzle,"Distance.tertiary"] <- SortedHabitat[3,"Distance"]
-}
-
-bush <- data.frame(inp=0:3,out=c(NA,"OB","LB","MB"))
-
-df$Primary.habitat <- find_replace(df$Primary.habitat, bush)
-df$Secondary.habitat <- find_replace(df$Secondary.habitat, bush)
-df$Tertiary.habitat <- find_replace(df$Tertiary.habitat, bush)
+# VI <- read.csv("/Users/maxgotts/Desktop/MPALA/Maps/MODUS Data/VegIndex.csv")
+# 
+# 
+# for (dazzle in 1:nrow(df)) {
+#   vi.arr <- VI %>% mutate("Distance" = ((Longitude - df$Longitude[dazzle])^2 + (Latitude - df$Latitude[dazzle])^2)) %>% 
+#     arrange(Distance)
+#   df[dazzle,"NDVI"] <- vi.arr[1,"NDVI"]
+#   df[dazzle,"EVI"] <- vi.arr[1,"EVI"]
+# }
+# 
+# Habitat_raster <- stack("/Users/maxgotts/Desktop/MPALA/Maps/Habitat/Habitat_2021_06_30_clipped.tif")
+# Habitat <- as.data.frame(Habitat_raster, xy = TRUE)
+# colnames(Habitat) <- c("Longitude","Latitude","Habitat")
+# Habitat <- filter(Habitat, !is.na(Habitat))
+# 
+# bush <- data.frame(inp=0:3,out=c(NA,"OG","LB","MB"))
+# 
+# df$Primary.habitat <- find_replace(df$Primary.habitat, bush)
+# df$Secondary.habitat <- find_replace(df$Secondary.habitat, bush)
+# df$Tertiary.habitat <- find_replace(df$Tertiary.habitat, bush)
 
 
 
-####### ORDER CSV #######
-df <- df[order(df$Photos.begin),]
-
-
-
-
-####### WRITE OUT #######
-write.csv(df,paste0("/Users/maxgotts/Desktop/MPALA/Whitesheets/BACKUP/ConvertedWhitesheets_",
-                        today(),".csv"), row.names=FALSE)
-write.csv(df,"/Users/maxgotts/Desktop/MPALA/Whitesheets/ConvertedWhitesheets.csv", row.names=FALSE)
-
-
-if (FALSE) {
-  source('/Users/maxgotts/Desktop/MPALA/Whitesheets/Whitesheet Processing/ConvertAbbrevations.R')
-}
+#[order(df$Photos.begin),]
