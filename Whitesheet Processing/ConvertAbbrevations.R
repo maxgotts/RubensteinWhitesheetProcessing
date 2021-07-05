@@ -258,25 +258,27 @@ df$Latitude <- as.double(df$Latitude)
 df$NDVI <- NA
 df$EVI <- NA
 
-NDVI_raster <- stack("/Users/maxgotts/Desktop/MPALA/Maps/MODUS\ Data/6-3-6-18/MODUS_NDVI_6-3-6-18.tif")
-NDVI <- as.data.frame(NDVI_raster, xy = TRUE)
-colnames(NDVI) <- c("Longitude","Latitude","raw.NDVI")
-NDVI <- filter(NDVI, !is.na(raw.NDVI))
-NDVI$NDVI <- NDVI$raw.NDVI * .0001
-NDVI$raw.NDVI <- NULL
+# NDVI_raster <- stack("/Users/maxgotts/Desktop/MPALA/Maps/MODUS\ Data/6-3-6-18/MODUS_NDVI_6-3-6-18.tif")
+# NDVI <- as.data.frame(NDVI_raster, xy = TRUE)
+# colnames(NDVI) <- c("Longitude","Latitude","raw.NDVI")
+# NDVI <- filter(NDVI, !is.na(raw.NDVI))
+# NDVI$NDVI <- NDVI$raw.NDVI * .0001
+# NDVI$raw.NDVI <- NULL
+# 
+# EVI_raster <- stack("/Users/maxgotts/Desktop/MPALA/Maps/MODUS\ Data/6-3-6-18/MODUS_EVI_6-3-6-18.tif")
+# EVI <- as.data.frame(EVI_raster, xy = TRUE)
+# colnames(EVI) <- c("Longitude","Latitude","raw.EVI")
+# EVI <- filter(EVI, !is.na(raw.EVI))
+# EVI$EVI <- EVI$raw.EVI * .0001
+# EVI$raw.EVI <- NULL
+VI <- read.csv("/Users/maxgotts/Desktop/MPALA/Maps/MODUS Data/VegIndex.csv")
 
-EVI_raster <- stack("/Users/maxgotts/Desktop/MPALA/Maps/MODUS\ Data/6-3-6-18/MODUS_EVI_6-3-6-18.tif")
-EVI <- as.data.frame(EVI_raster, xy = TRUE)
-colnames(EVI) <- c("Longitude","Latitude","raw.EVI")
-EVI <- filter(EVI, !is.na(raw.EVI))
-EVI$EVI <- EVI$raw.EVI * .0001
-EVI$raw.EVI <- NULL
 
 for (dazzle in 1:nrow(df)) {
-  df[dazzle,"NDVI"] <- (NDVI %>% mutate("Distance" = ((Longitude - df$Longitude[dazzle])^2 + (Latitude - df$Latitude[dazzle])^2)) %>% 
-                          arrange(Distance))[1,"NDVI"]
-  df[dazzle,"EVI"] <- (EVI %>% mutate("Distance" = ((Longitude - df$Longitude[dazzle])^2 + (Latitude - df$Latitude[dazzle])^2)) %>% 
-                          arrange(Distance))[1,"EVI"]
+  vi.arr <- VI %>% mutate("Distance" = ((Longitude - df$Longitude[dazzle])^2 + (Latitude - df$Latitude[dazzle])^2)) %>% 
+    arrange(Distance)
+  df[dazzle,"NDVI"] <- vi.arr[1,"NDVI"]
+  df[dazzle,"EVI"] <- vi.arr[1,"EVI"]
 }
 
 
