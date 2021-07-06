@@ -222,6 +222,8 @@ df$GPS.x <- NULL
 df$GPS.y <- NULL
 df$Distance <- NULL
 df$Direction <- NULL
+df$GPS.x <- df$Corrected.GPS.x
+df$GPS.y <- df$Corrected.GPS.y
 df$Corrected.GPS.x <- NULL
 df$Corrected.GPS.y <- NULL
 cat("Remove extraneous columns done\n")
@@ -265,13 +267,9 @@ cat("Habitat, NDVI, and EVI done\n")
 
 
 ####### DISTANCE TO MOB #######
-df$Distance.from.cattle <- NULL
-
-
-
-df$Distance.to.mob <- NA
+df$Distance.from.mob <- NA
 df$Closest.mob.size <- NA
-days <- 3
+days <- 0
 
 mobs <- filter(df, Species%in%cattle.abbr)
 for (dazzle in 1:nrow(df)) {
@@ -287,7 +285,7 @@ for (dazzle in 1:nrow(df)) {
     next
   }
   
-  mob.s.arr <- mob.s %>% mutate("Distance" = ((Longitude - df$Longitude[dazzle])^2 + (Latitude - df$Latitude[dazzle])^2)) %>%
+  mob.s.arr <- mob.s %>% mutate("Distance" = ((GPS.x - df$GPS.x[dazzle])^2 + (GPS.y - df$GPS.y[dazzle])^2)) %>%
     arrange(Distance)
   df[dazzle,"Distance.to.mob"] <- mob.s.arr[1,"Distance"]
   df[dazzle,"Closest.mob.size"] <- mob.s.arr[1,"Total.animals"]
