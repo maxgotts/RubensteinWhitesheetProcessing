@@ -306,6 +306,15 @@ for (coln in colnames(df)) {
 cat("NA to empty string done\n")
 
 
+####### ADD IDENTIFIER #######
+df$Identifier <- NA
+df[df$Species=="GZ","Identifier"] <- paste0("GZ",1:nrow(df[df$Species=="GZ",]))
+df[df$Species=="PZ","Identifier"] <- paste0("PZ",1:nrow(df[df$Species=="PZ",]))
+df[df$QuickSpecies=="Cattle","Identifier"] <- paste0("CT",1:nrow(df[df$QuickSpecies=="Cattle",]))
+df[df$QuickSpecies=="Camel","Identifier"] <- paste0("CM",1:nrow(df[df$QuickSpecies=="Camel",]))
+
+
+
 ####### ORDER CSV #######
 df <- df %>% arrange(Photos.begin) 
 cat("Data frame ordered\n")
