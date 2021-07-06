@@ -271,7 +271,7 @@ df$Distance.from.mob <- NA
 df$Closest.mob.size <- NA
 days <- 0
 
-mobs <- filter(df, Species%in%cattle.abbr)
+mobs <- filter(df, QuickSpecies=="Cattle")
 for (dazzle in 1:nrow(df)) {
   if (!(df[dazzle,"Species"]%in%zebra.abbr)) next
   mob.s <- mobs
@@ -285,7 +285,7 @@ for (dazzle in 1:nrow(df)) {
     next
   }
   
-  mob.s.arr <- mob.s %>% mutate("Distance" = ((GPS.x - df$GPS.x[dazzle])^2 + (GPS.y - df$GPS.y[dazzle])^2)) %>%
+  mob.s.arr <- mob.s %>% mutate("Distance" = sqrt((GPS.x - df$GPS.x[dazzle])^2 + (GPS.y - df$GPS.y[dazzle])^2)) %>%
     arrange(Distance)
   df[dazzle,"Distance.to.mob"] <- mob.s.arr[1,"Distance"]
   df[dazzle,"Closest.mob.size"] <- mob.s.arr[1,"Total.animals"]
