@@ -86,59 +86,59 @@ grasses_abbr <- function(vec,date) {
 }
 
 
-cat("Grass.spp.1 abbreviation\n")
+cat("* Grass.spp.1 abbreviation\n")
 df$Grass.spp.1 <- grasses_abbr(df$Grass.spp.1,df$Date)
-cat("Grass.spp.2 abbreviation\n")
+cat("* Grass.spp.2 abbreviation\n")
 df$Grass.spp.2 <- grasses_abbr(df$Grass.spp.2,df$Date)
-cat("Grass.spp.3 abbreviation\n")
+cat("* Grass.spp.3 abbreviation\n")
 df$Grass.spp.3 <- grasses_abbr(df$Grass.spp.3,df$Date)
-cat("Grass.spp.4 abbreviation\n")
+cat("* Grass.spp.4 abbreviation\n")
 df$Grass.spp.4 <- grasses_abbr(df$Grass.spp.4,df$Date)
 
 
-cat("Grass abbreviations done\n")
+cat("* Grass abbreviations done\n")
 
 
 ####### GRASS COLOUR ABBREVIATIONS #######
 grass_colour <- data.frame(x=c("B","BG","GB","G"),
                            y=c("brown","brown with some green","green with some brown","green"))
 df$Grass.color <- find_replace(df$Grass.color,grass_colour)
-cat("Grass colours done\n")
+cat("* Grass colours done\n")
 
 
 ####### BUSH TYPE ABBREVIATIONS #######
 bush_type <- data.frame(x=c("LB","MB","TB","OG","LB,MB"),
                         y=c("light","medium", "thick","open grassland","medium"))
 df$Bush.type <- find_replace(df$Bush.type,bush_type)
-cat("Bush type done\n")
+cat("* Bush type done\n")
 
 
 ####### ACTIVITY ABBREVIATIONS #######
 activity <- data.frame(x=c("St", "Wa", "Gr", "Dr", "Re"),
                        y=c("Standing", "Walking", "Grazing", "Drinking", "Resting"))
 df$Activity <- find_replace(df$Activity,activity)
-cat("Activity done\n")
+cat("* Activity done\n")
 
 
 ####### RAIN ABBREVIATIONS #######
 rain <- data.frame(x=c("NR","LR","HR"),
                    y=c("no rain","light","heavy"))
 df$Rain <- find_replace(df$Rain,rain)
-cat("Rain done\n")
+cat("* Rain done\n")
 
 
 ####### SUN ABBREVIATIONS #######
 sun <- data.frame(x=c("FS","PS","NS"),
                   y=c("full","part","no sun"))
 df$Sun <- find_replace(df$Sun,sun)
-cat("Sun done\n")
+cat("* Sun done\n")
 
 
 ####### WIND ABBREVIATIONS #######
 wind <- data.frame(x=c("NW","LW","MW", "SW"),
                    y=c("no wind","light","medium", "strong"))
 df$Wind <- find_replace(df$Wind,wind)
-cat("Wind done\n")
+cat("* Wind done\n")
 
 
 
@@ -197,7 +197,7 @@ df[df$Species%in%cattle.abbr,"QuickSpecies"] <- "Cattle"
 df[df$Species%in%camel.abbr,"QuickSpecies"] <- "Camel"
 df[df$Species=="PZ","QuickSpecies"] <- "PZ"
 df[df$Species=="GZ","QuickSpecies"] <- "GZ"
-cat("Species & QuickSpecies done\n")
+cat("* Species & QuickSpecies done\n")
 
 ####### EXTRACT DATE-TIME #######
 df$Year <- NA
@@ -214,7 +214,7 @@ for (dazzle in 1:nrow(df)) {
   df[dazzle,"Hour"] <- hour(t)
   df[dazzle,"Minute"] <- minute(t)
 }
-cat("Extract time done\n")
+cat("* Extract time done\n")
 
 
 
@@ -234,11 +234,11 @@ for (dazzle in 1:nrow(df)) {
 }
 df$Other.species <- NULL
 
-cat("Split other species done\n")
+cat("* Split other species done\n")
 
 ####### NUMBER OF GRASS SPECIES #######
 df$Number.grasses <- (df$Grass.spp.1!="")+(df$Grass.spp.2!="")+(df$Grass.spp.3!="")+(df$Grass.spp.4!="")
-cat("Total other species done\n")
+cat("* Total other species done\n")
 
 
 ####### REMOVE EXTRANEOUS #######
@@ -250,18 +250,18 @@ df$GPS.x <- df$Corrected.GPS.x
 df$GPS.y <- df$Corrected.GPS.y
 df$Corrected.GPS.x <- NULL
 df$Corrected.GPS.y <- NULL
-cat("Remove extraneous columns done\n")
+cat("* Remove extraneous columns done\n")
 
 
 ####### TOTAL ANIMALS #######
 colnames(df)[23] <- "Total.animals"
-cat("Total.zebras renamed\n")
+cat("* Total.zebras renamed\n")
 
 
 ####### CONVERT LAT/LONG TO NUMERIC #######
 df$Longitude <- as.double(df$Longitude)
 df$Latitude <- as.double(df$Latitude)
-cat("Long/Lat to numeric done\n")
+cat("* Long/Lat to numeric done\n")
 
 
 ####### HABITAT, NDVI, EVI #######
@@ -286,7 +286,7 @@ for (dazzle in 1:nrow(df)) {
   df[dazzle,"NDVI"] <- SortedHabitat[1,"NDVI"]
   df[dazzle,"EVI"] <- SortedHabitat[1,"EVI"]
 }
-cat("Habitat, NDVI, and EVI done\n")
+cat("* Habitat, NDVI, and EVI done\n")
 
 
 
@@ -318,7 +318,7 @@ for (dazzle in 1:nrow(df)) {
   df[dazzle,"Closest.mob.size"] <- mob.s.arr[1,"Total.animals"]
 }
 df$Scaled.mob.size <- df$Closest.mob.size/(df$Distance.from.mob+1e-10)
-cat("Distance to mob etc. done\n")
+cat("* Distance to mob etc. done\n")
 
 
 
@@ -328,7 +328,7 @@ for (coln in colnames(df)) {
   column[is.na(column)]<-""
   df[,coln] <- column
 }
-cat("NA to empty string done\n")
+cat("* NA to empty string done\n")
 
 
 ####### ADD IDENTIFIER #######
@@ -342,13 +342,13 @@ df[df$QuickSpecies=="Camel","Identifier"] <- paste0("CM",1:nrow(df[df$QuickSpeci
 
 ####### ORDER CSV #######
 df <- df %>% arrange(Photos.begin) 
-cat("Data frame ordered\n")
+cat("* Data frame ordered\n")
 
 
 
 
 ####### WRITE OUT #######
-cat("Writing...\n")
+cat("* Writing...\n")
 
 write.csv(df,paste0("/Users/maxgotts/Desktop/MPALA/Whitesheets/BACKUP/ConvertedWhitesheets_",
                         today(),".csv"), row.names=FALSE)
