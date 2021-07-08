@@ -9,8 +9,6 @@ source('~/Desktop/MPALA/mpala.R')
 
 library(dplyr)
 library(lubridate)
-library(raster)
-library(rgdal)
 library(dplyr)
 library(ggpubr)
 
@@ -88,9 +86,13 @@ grasses_abbr <- function(vec,date) {
 }
 
 
+cat("Grass.spp.1 abbreviation\n")
 df$Grass.spp.1 <- grasses_abbr(df$Grass.spp.1,df$Date)
+cat("Grass.spp.2 abbreviation\n")
 df$Grass.spp.2 <- grasses_abbr(df$Grass.spp.2,df$Date)
+cat("Grass.spp.3 abbreviation\n")
 df$Grass.spp.3 <- grasses_abbr(df$Grass.spp.3,df$Date)
+cat("Grass.spp.4 abbreviation\n")
 df$Grass.spp.4 <- grasses_abbr(df$Grass.spp.4,df$Date)
 
 
@@ -144,23 +146,45 @@ cat("Wind done\n")
 species_abbr <- data.frame(x=c("GZ",
                                "PZ",
                                "Cattle",
+                               "Camel",
                                "Cam",
+                               "Community Sheep",
+                               "Sheep",
                                "SH",
                                "Mpala Cattle",
+                               "MC",
                                "Community Cattle",
+                               "Putonois Cattle",
+                               "CC",
                                "Zainab Camels",
+                               "Zainab Camel",
+                               "ZC",
                                "Community Kaparo Cattle",
-                               "Community Camels"
+                               "Kaparo",
+                               "CKC",
+                               "Community Camels",
+                               "Community Camel"
                                ),
                            y=c("GZ",
                                "PZ",
                                "Cattle",
                                "Camel",
-                               "Sheep",
+                               "Camel",
+                               "SH",
+                               "SH",
+                               "SH",
+                               "MC",
                                "MC",
                                "CC",
+                               "CC",
+                               "CC",
+                               "ZC",
+                               "ZC",
                                "ZC",
                                "CKC",
+                               "CKC",
+                               "CKC",
+                               "Comm_Camel",
                                "Comm_Camel"))
 df$Species <- find_replace(df$Species,species_abbr)
 
@@ -271,6 +295,9 @@ df$Distance.from.mob <- NA
 df$Closest.mob.size <- NA
 days <- 0
 
+df$GPS.x <- as.numeric(df$GPS.x)
+df$GPS.y <- as.numeric(df$GPS.y)
+
 mobs <- filter(df, QuickSpecies=="Cattle")
 for (dazzle in 1:nrow(df)) {
   if (!(df[dazzle,"Species"]%in%zebra.abbr)) next
@@ -280,17 +307,17 @@ for (dazzle in 1:nrow(df)) {
   mob.s <- filter(mob.s, DaysTillZebra<=days, DaysTillZebra>=0)
   
   if (nrow(mob.s) == 0) {
-    df[dazzle,"Distance.to.mob"] <- NA #1
+    df[dazzle,"Distance.from.mob"] <- NA #1
     df[dazzle,"Closest.mob.size"] <- NA
     next
   }
   
   mob.s.arr <- mob.s %>% mutate("Distance" = sqrt((GPS.x - df$GPS.x[dazzle])^2 + (GPS.y - df$GPS.y[dazzle])^2)) %>%
     arrange(Distance)
-  df[dazzle,"Distance.to.mob"] <- mob.s.arr[1,"Distance"]
+  df[dazzle,"Distance.from.mob"] <- mob.s.arr[1,"Distance"]
   df[dazzle,"Closest.mob.size"] <- mob.s.arr[1,"Total.animals"]
 }
-df$Scaled.mob.size <- df$Closest.mob.size/(df$Distance.to.mob+1e-10)
+df$Scaled.mob.size <- df$Closest.mob.size/(df$Distance.from.mob+1e-10)
 cat("Distance to mob etc. done\n")
 
 
