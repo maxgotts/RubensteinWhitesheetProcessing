@@ -273,7 +273,7 @@ df$Distance.tertiary <- NA # Distance to furthest
 df$NDVI <- NA
 df$EVI <- NA
 
-Habitat <- read.csv("/Users/maxgotts/Desktop/MPALA/Maps/Habitat/Habitat.csv")
+Habitat <- read.csv("/Users/maxgotts/Desktop/MPALA/Maps/TIFFs.csv")
 
 for (dazzle in 1:nrow(df)) {
   SortedHabitat <- Habitat %>% mutate("Distance" = ((Longitude - df$Longitude[dazzle])^2 + (Latitude - df$Latitude[dazzle])^2)) %>% 
@@ -283,11 +283,31 @@ for (dazzle in 1:nrow(df)) {
   df[dazzle,"Distance.secondary"] <- SortedHabitat[2,"Distance"]
   df[dazzle,"Tertiary.habitat"] <- SortedHabitat[3,"Habitat"]
   df[dazzle,"Distance.tertiary"] <- SortedHabitat[3,"Distance"]
-  df[dazzle,"NDVI"] <- SortedHabitat[1,"NDVI"]
-  df[dazzle,"EVI"] <- SortedHabitat[1,"EVI"]
+  for (date_id in 1:nrow(vi_dates)) {
+    start <- vi_dates[date_id,"start"]
+    end <- vi_dates[date_id,"end"]
+    date_range <- paste0(start,"-",end)
+    date_range_mod <- gsub("-","_",date_range)
+    if (is.after(mdy(df[dazzle,"Date"]),ymd(paste0("2021-",start))) && is.before(mdy(df[dazzle,"Date"]),ymd(paste0("2021-",end)))) {
+      # cat("Ahoy",date_range_mod,"\n")
+      df[dazzle,"NDVI"] <- SortedHabitat[1,paste0("NDVI_",date_range_mod)]
+      df[dazzle,"EVI"] <- SortedHabitat[1,paste0("EVI_",date_range_mod)]
+      break
+    }
+  }
 }
 cat("* Habitat, NDVI, and EVI done\n")
 
+
+# for (i in 1:10) {
+#   cat("new:",i,"\n")
+#   for (j in 1:10) {
+#     cat(i," : ",j,"\n")
+#     if (i == 3 && j == 5) {
+#       break
+#     }
+#   }
+# }
 
 
 ####### DISTANCE TO MOB #######
@@ -295,8 +315,8 @@ df$Distance.from.mob <- NA
 df$Closest.mob.size <- NA
 days <- 0
 
-df$GPS.x <- as.numeric(df$GPS.x)
-df$GPS.y <- as.numeric(df$GPS.y)
+# df$GPS.x <- as.numeric(df$GPS.x)
+# df$GPS.y <- as.numeric(df$GPS.y)
 
 mobs <- filter(df, QuickSpecies=="Cattle")
 for (dazzle in 1:nrow(df)) {
@@ -319,6 +339,36 @@ for (dazzle in 1:nrow(df)) {
 }
 df$Scaled.mob.size <- df$Closest.mob.size/(df$Distance.from.mob+1e-10)
 cat("* Distance to mob etc. done\n")
+
+
+####### DISTANCE TO CLOSEST HERD #######
+df$Distance.from.herd <- NA
+df$Closest.herd.size <- NA
+df$Distance.from.herd.opp.sp <- NA
+df$Closest.herd.size.opp.sp <- NA
+
+zebras <- filter(df, QuickSpecies=="Cattle")
+for (dazzle in 1:nrow(df)) {
+  if (!(df[dazzle,"Species"]%in%zebra.abbr)) next
+  zebra.s <- zebras
+  zebra.s$DaysTillZebra <- time_length(interval(mdy(zebra.s$Date),mdy(df[dazzle,"Date"])),"day")
+  # + => cattle are before zebras; - => cattle are after after zebras
+  zebra.s <- filter(zebra.s, DaysTillZebra<=days, DaysTillZebra>=0)
+  
+  if (nrow(zebra.s) == 0) next
+  
+  zebra.s.arr <- zebra.s %>% mutate("Distance" = sqrt((GPS.x - df$GPS.x[dazzle])^2 + (GPS.y - df$GPS.y[dazzle])^2)) %>%
+    arrange(Distance)
+  df[dazzle,"Distance.from.herd"] <- zebra.s.arr[2,"Distance"]
+  df[dazzle,"Closest.herd.size"] <- zebra.s.arr[2,"Total.animals"]
+  
+  if (df[dazzle,"Species"]=="GZ") opp.sp <- "PZ"
+  if (df[dazzle,"Species"]=="PZ") opp.sp <- "GZ"
+  zebra.s.arr.opp.sp <- filter(zebra.s.arr, Species==opp.sp)
+  df[dazzle,"Distance.from.opp.sp"] <- zebra.s.arr.opp.sp[1,"Distance"]
+  df[dazzle,"Closest.opp.sp.size"] <- zebra.s.arr.opp.sp[1,"Total.animals"]
+}
+cat("* Distance to herd etc. & opposite species done\n")
 
 
 
@@ -350,9 +400,18 @@ cat("* Data frame ordered\n")
 ####### WRITE OUT #######
 cat("* Writing...\n")
 
-write.csv(df,paste0("/Users/maxgotts/Desktop/MPALA/Whitesheets/BACKUP/ConvertedWhitesheets_",
-                        today(),".csv"), row.names=FALSE)
-write.csv(df,"/Users/maxgotts/Desktop/MPALA/Whitesheets/ConvertedWhitesheets.csv", row.names=FALSE)
+# write.csv(df,paste0("/Users/maxgotts/Desktop/MPALA/Whitesheets/BACKUP/ConvertedWhitesheets_",
+#                         today(),".csv"), row.names=FALSE)
+# write.csv(df,"/Users/maxgotts/Desktop/MPALA/Whitesheets/ConvertedWhitesheets.csv", row.names=FALSE)
+
+
+
+
+
+
+########################################################################################################
+
+
 
 
 if (FALSE) {
