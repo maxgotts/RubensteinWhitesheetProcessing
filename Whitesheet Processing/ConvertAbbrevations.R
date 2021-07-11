@@ -402,9 +402,9 @@ cat("* Data frame ordered\n")
 ####### WRITE OUT #######
 cat("* Writing...\n")
 
-# write.csv(df,paste0("/Users/maxgotts/Desktop/MPALA/Whitesheets/BACKUP/ConvertedWhitesheets_",
-#                         today(),".csv"), row.names=FALSE)
-# write.csv(df,"/Users/maxgotts/Desktop/MPALA/Whitesheets/ConvertedWhitesheets.csv", row.names=FALSE)
+write.csv(df,paste0("/Users/maxgotts/Desktop/MPALA/Whitesheets/BACKUP/ConvertedWhitesheets_",
+                        today(),".csv"), row.names=FALSE)
+write.csv(df,"/Users/maxgotts/Desktop/MPALA/Whitesheets/ConvertedWhitesheets.csv", row.names=FALSE)
 
 
 
