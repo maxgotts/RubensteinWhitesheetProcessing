@@ -278,7 +278,7 @@ df$EVI <- NA
 Habitat <- read.csv("/Users/maxgotts/Desktop/MPALA/Maps/TIFFs.csv")
 
 for (dazzle in 1:nrow(df)) {
-  SortedHabitat <- Habitat %>% mutate("Distance" = ((Longitude - df$Longitude[dazzle])^2 + (Latitude - df$Latitude[dazzle])^2)) %>% 
+  SortedHabitat <- Habitat %>% mutate("Distance" = sqrt(((Longitude - df$Longitude[dazzle])^2 + (Latitude - df$Latitude[dazzle])^2))) %>% 
     arrange(Distance)
   df[dazzle,"Primary.habitat"] <- SortedHabitat[1,"Habitat"]
   df[dazzle,"Secondary.habitat"] <- SortedHabitat[2,"Habitat"]
@@ -298,6 +298,8 @@ for (dazzle in 1:nrow(df)) {
     }
   }
 }
+df$Distance.secondary <- degrees_to_meters(df$Distance.secondary)
+df$Distance.tertiary <- degrees_to_meters(df$Distance.tertiary)
 cat("* Habitat, NDVI, and EVI done\n")
 
 
@@ -314,11 +316,9 @@ cat("* Habitat, NDVI, and EVI done\n")
 
 ####### DISTANCE TO MOB #######
 df$Distance.from.mob <- NA
+df$Distance.from.mob.d <- NA
 df$Closest.mob.size <- NA
 days <- 0
-
-# df$GPS.x <- as.numeric(df$GPS.x)
-# df$GPS.y <- as.numeric(df$GPS.y)
 
 mobs <- filter(df, QuickSpecies=="Cattle")
 for (dazzle in 1:nrow(df)) {
@@ -338,8 +338,11 @@ for (dazzle in 1:nrow(df)) {
     arrange(Distance)
   df[dazzle,"Distance.from.mob"] <- mob.s.arr[1,"Distance"]
   df[dazzle,"Closest.mob.size"] <- mob.s.arr[1,"Total.animals"]
+  mob.s.arr <- mob.s %>% mutate("Distance" = sqrt((Longitude - df$Longitude[dazzle])^2 + (Latitude - df$Latitude[dazzle])^2)) %>%
+    arrange(Distance)
+  # df[dazzle,"Distance.from.mob.d"] <- sqrt((mob.s.arr[1,"Longitude"] - df$Longitude[dazzle])^2 + (mob.s.arr[1,"Latitude"] - df$Latitude[dazzle])^2)
 }
-df$Scaled.mob.size <- df$Closest.mob.size/(df$Distance.from.mob+1e-10)
+# df$Scaled.mob.size <- df$Closest.mob.size/(df$Distance.from.mob+1e-10)
 cat("* Distance to mob etc. done\n")
 
 
@@ -371,6 +374,10 @@ for (dazzle in 1:nrow(df)) {
   df[dazzle,"Closest.opp.sp.size"] <- zebra.s.arr.opp.sp[1,"Total.animals"]
 }
 cat("* Distance to herd etc. & opposite species done\n")
+
+
+####### CONVERT DEGREES TO METERS #######
+df$Distance.to.water <- degrees_to_meters(df$Distance.to.water)
 
 
 
