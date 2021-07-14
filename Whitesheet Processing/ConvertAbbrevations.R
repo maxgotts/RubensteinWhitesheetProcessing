@@ -164,7 +164,8 @@ species_abbr <- data.frame(x=c("GZ",
                                "Kaparo",
                                "CKC",
                                "Community Camels",
-                               "Community Camel"
+                               "Community Camel",
+                               "Comm_Camel"
                                ),
                            y=c("GZ",
                                "PZ",
@@ -187,6 +188,7 @@ species_abbr <- data.frame(x=c("GZ",
                                "CKC",
                                "CKC",
                                "Comm_Camel",
+                               "Comm_Camel",
                                "Comm_Camel"))
 df$Species <- find_replace(df$Species,species_abbr)
 
@@ -195,10 +197,10 @@ df$Species <- find_replace(df$Species,species_abbr)
 # zebra.abbr <- c("GZ","PZ")
 df$QuickSpecies <- NA
 df[df$Species%in%cattle.abbr,"QuickSpecies"] <- "Cattle"
-# df[df$Species%in%zebra.abbr,"QuickSpecies"] <- "Zebra"
 df[df$Species%in%camel.abbr,"QuickSpecies"] <- "Camel"
 df[df$Species=="PZ","QuickSpecies"] <- "PZ"
 df[df$Species=="GZ","QuickSpecies"] <- "GZ"
+df[df$Species=="SH","QuickSpecies"] <- "SH"
 cat("* Species & QuickSpecies done\n")
 
 ####### EXTRACT DATE-TIME #######
@@ -396,6 +398,7 @@ df[df$Species=="GZ","Identifier"] <- paste0("GZ",1:nrow(df[df$Species=="GZ",]))
 df[df$Species=="PZ","Identifier"] <- paste0("PZ",1:nrow(df[df$Species=="PZ",]))
 df[df$QuickSpecies=="Cattle","Identifier"] <- paste0("CT",1:nrow(df[df$QuickSpecies=="Cattle",]))
 df[df$QuickSpecies=="Camel","Identifier"] <- paste0("CM",1:nrow(df[df$QuickSpecies=="Camel",]))
+df[df$QuickSpecies=="SH","Identifier"] <- paste0("SH",1:nrow(df[df$QuickSpecies=="SH",]))
 
 
 
