@@ -2,7 +2,6 @@ rm(list=ls())
 
 
 
-
 ## SETUP ##
 
 source('~/Desktop/MPALA/mpala.R')
@@ -16,17 +15,83 @@ ws <- read.csv("/Users/maxgotts/Desktop/MPALA/Whitesheets/Whitesheet\ Processing
 df <- filter(ws,!is.na(Whitesheet.Filename),!is.na(GPS.x),!is.na(GPS.y))
 df[,c("X", "X.1")] <- NULL
 
-## USEFUL FUNCTIONS ##
 
-military_to_24 <- function(military) { # military is a number
-  military_time <- paste0(military)
-  split_military_time <- strsplit(military_time,"")[[1]]
-  if (length(split_military_time) == 3) split_military_time <- c("0", split_military_time)
-  split_hour24_time <- c(split_military_time[1], split_military_time[2], ":", split_military_time[3], split_military_time[4])
-  if (split_hour24_time[1] == 0) split_hour24_time <- split_hour24_time[2:5]
-  hour24_time <- paste(split_hour24_time, collapse = "")
-  return(hour24_time)
-}
+####### DATE TO DAYS #######
+df$Days <- days_since_start(mdy(df$Date))
+
+
+####### SPECIES ABBREVIATIONS #######
+species_abbr <- data.frame(x=c("GZ",
+                               "PZ",
+                               "Cattle",
+                               "Camel",
+                               "Cam",
+                               "Community Sheep",
+                               "Sheep",
+                               "SH",
+                               "Mpala Cattle",
+                               "Mpala Steers",
+                               "MC",
+                               "Community Cattle",
+                               "Putonois Cattle",
+                               "CC",
+                               "Zainab Camels",
+                               "Zainab Camel",
+                               "ZC",
+                               "Community Kaparo Cattle",
+                               "Kaparo",
+                               "CKC",
+                               "Community Camels",
+                               "Community Camel",
+                               "Comm_Camel"
+                            ),
+                            y=c("GZ",
+                                "PZ",
+                                "Cattle",
+                                "Camel",
+                                "Camel",
+                                "SH",
+                                "SH",
+                                "SH",
+                                "MC",
+                                "MC",
+                                "MC",
+                                "CC",
+                                "CC",
+                                "CC",
+                                "ZC",
+                                "ZC",
+                                "ZC",
+                                "CKC",
+                                "CKC",
+                                "CKC",
+                                "Comm_Camel",
+                                "Comm_Camel",
+                                "Comm_Camel"))
+df$Species <- find_replace(df$Species,species_abbr)
+
+# cattle.abbr <- c("Cattle","CKC","CC","MC")
+# camel.abbr <- c("Camel","ZC","Comm_Camel")
+# zebra.abbr <- c("GZ","PZ")
+df$QuickSpecies <- NA
+df[df$Species%in%cattle.abbr,"QuickSpecies"] <- "Cattle"
+df[df$Species%in%camel.abbr,"QuickSpecies"] <- "Camel"
+df[df$Species=="PZ","QuickSpecies"] <- "PZ"
+df[df$Species=="GZ","QuickSpecies"] <- "GZ"
+df[df$Species=="SH","QuickSpecies"] <- "SH"
+cat("* Species & QuickSpecies done\n")
+
+
+####### ADD IDENTIFIER #######
+df$Identifier <- NA
+df[df$Species=="GZ","Identifier"] <- paste0("GZ",1:nrow(df[df$Species=="GZ",]))
+df[df$Species=="PZ","Identifier"] <- paste0("PZ",1:nrow(df[df$Species=="PZ",]))
+df[df$QuickSpecies=="Cattle","Identifier"] <- paste0("CT",1:nrow(df[df$QuickSpecies=="Cattle",]))
+df[df$QuickSpecies=="Camel","Identifier"] <- paste0("CM",1:nrow(df[df$QuickSpecies=="Camel",]))
+df[df$QuickSpecies=="SH","Identifier"] <- paste0("SH",1:nrow(df[df$QuickSpecies=="SH",]))
+
+df <- filter(df, !(Identifier%in%blacklist))
+cat("* Identifier and filter by blacklist done\n")
 
 
 
@@ -142,67 +207,6 @@ cat("* Wind done\n")
 
 
 
-####### SPECIES ABBREVIATIONS #######
-species_abbr <- data.frame(x=c("GZ",
-                               "PZ",
-                               "Cattle",
-                               "Camel",
-                               "Cam",
-                               "Community Sheep",
-                               "Sheep",
-                               "SH",
-                               "Mpala Cattle",
-                               "Mpala Steers",
-                               "MC",
-                               "Community Cattle",
-                               "Putonois Cattle",
-                               "CC",
-                               "Zainab Camels",
-                               "Zainab Camel",
-                               "ZC",
-                               "Community Kaparo Cattle",
-                               "Kaparo",
-                               "CKC",
-                               "Community Camels",
-                               "Community Camel",
-                               "Comm_Camel"
-                               ),
-                           y=c("GZ",
-                               "PZ",
-                               "Cattle",
-                               "Camel",
-                               "Camel",
-                               "SH",
-                               "SH",
-                               "SH",
-                               "MC",
-                               "MC",
-                               "MC",
-                               "CC",
-                               "CC",
-                               "CC",
-                               "ZC",
-                               "ZC",
-                               "ZC",
-                               "CKC",
-                               "CKC",
-                               "CKC",
-                               "Comm_Camel",
-                               "Comm_Camel",
-                               "Comm_Camel"))
-df$Species <- find_replace(df$Species,species_abbr)
-
-# cattle.abbr <- c("Cattle","CKC","CC","MC")
-# camel.abbr <- c("Camel","ZC","Comm_Camel")
-# zebra.abbr <- c("GZ","PZ")
-df$QuickSpecies <- NA
-df[df$Species%in%cattle.abbr,"QuickSpecies"] <- "Cattle"
-df[df$Species%in%camel.abbr,"QuickSpecies"] <- "Camel"
-df[df$Species=="PZ","QuickSpecies"] <- "PZ"
-df[df$Species=="GZ","QuickSpecies"] <- "GZ"
-df[df$Species=="SH","QuickSpecies"] <- "SH"
-cat("* Species & QuickSpecies done\n")
-
 ####### EXTRACT DATE-TIME #######
 df$Year <- NA
 df$Month <- NA
@@ -268,7 +272,7 @@ df$Latitude <- as.double(df$Latitude)
 cat("* Long/Lat to numeric done\n")
 
 
-####### HABITAT, NDVI, EVI #######
+####### HABITAT, NDVI, EVI, VEG #######
 df$Primary.habitat <- NA # Closest
 df$Secondary.habitat <- NA # Second-closest
 df$Tertiary.habitat <- NA # Furthest
@@ -277,7 +281,10 @@ df$Distance.tertiary <- NA # Distance to furthest
 df$NDVI <- NA
 df$EVI <- NA
 
-Habitat <- read.csv("/Users/maxgotts/Desktop/MPALA/Maps/TIFFs.csv")
+Habitat <- read.csv("/Users/maxgotts/Desktop/MPALA/Maps/HabitatTIFF.csv")
+VI <- read.csv("/Users/maxgotts/Desktop/MPALA/Maps/VITIFF.csv") # Loops_1_2_
+Veg <- read.csv("/Users/maxgotts/Desktop/MPALA/Vegetation/ConvertedVegetation.csv")
+colnames(Veg) <- gsub("..", ".", colnames(Veg), fixed=TRUE)
 
 for (dazzle in 1:nrow(df)) {
   SortedHabitat <- Habitat %>% mutate("Distance" = sqrt(((Longitude - df$Longitude[dazzle])^2 + (Latitude - df$Latitude[dazzle])^2))) %>% 
@@ -287,6 +294,9 @@ for (dazzle in 1:nrow(df)) {
   df[dazzle,"Distance.secondary"] <- SortedHabitat[2,"Distance"]
   df[dazzle,"Tertiary.habitat"] <- SortedHabitat[3,"Habitat"]
   df[dazzle,"Distance.tertiary"] <- SortedHabitat[3,"Distance"]
+  
+  SortedVI <- VI %>% mutate("Distance" = sqrt(((Longitude - df$Longitude[dazzle])^2 + (Latitude - df$Latitude[dazzle])^2))) %>% 
+    arrange(Distance)
   for (date_id in 1:nrow(vi_dates)) {
     start <- vi_dates[date_id,"start"]
     end <- vi_dates[date_id,"end"]
@@ -294,15 +304,20 @@ for (dazzle in 1:nrow(df)) {
     date_range_mod <- gsub("-","_",date_range)
     if (is.after(mdy(df[dazzle,"Date"]),ymd(paste0("2021-",start))) && is.before(mdy(df[dazzle,"Date"]),ymd(paste0("2021-",end)))) {
       # cat("Ahoy",date_range_mod,"\n")
-      df[dazzle,"NDVI"] <- SortedHabitat[1,paste0("NDVI_",date_range_mod)]
-      df[dazzle,"EVI"] <- SortedHabitat[1,paste0("EVI_",date_range_mod)]
+      df[dazzle,"NDVI"] <- SortedVI[1,paste0("NDVI_",date_range_mod)]
+      df[dazzle,"EVI"] <- SortedVI[1,paste0("EVI_",date_range_mod)]
       break
     }
   }
+  
+  SortedVeg <- Veg %>% mutate("Distance" = sqrt(((Longitude - df$Longitude[dazzle])^2 + (Latitude - df$Latitude[dazzle])^2))) %>% 
+    arrange(Distance)
+  df[dazzle,colnames(Veg)[9:19]] <- SortedVeg[1,9:19]
+  
 }
 df$Distance.secondary <- degrees_to_meters(df$Distance.secondary)
 df$Distance.tertiary <- degrees_to_meters(df$Distance.tertiary)
-cat("* Habitat, NDVI, and EVI done\n")
+cat("* Habitat, NDVI, EVI, and Veg done\n")
 
 
 # for (i in 1:10) {
@@ -318,7 +333,7 @@ cat("* Habitat, NDVI, and EVI done\n")
 
 ####### DISTANCE TO MOB #######
 df$Distance.from.mob <- NA
-df$Distance.from.mob.d <- NA
+# df$Distance.from.mob.d <- NA
 df$Closest.mob.size <- NA
 days <- 0
 
@@ -344,8 +359,33 @@ for (dazzle in 1:nrow(df)) {
     arrange(Distance)
   # df[dazzle,"Distance.from.mob.d"] <- sqrt((mob.s.arr[1,"Longitude"] - df$Longitude[dazzle])^2 + (mob.s.arr[1,"Latitude"] - df$Latitude[dazzle])^2)
 }
-# df$Scaled.mob.size <- df$Closest.mob.size/(df$Distance.from.mob+1e-10)
 cat("* Distance to mob etc. done\n")
+
+
+
+####### APPROXIMATE DENSITY #######
+df$Approximate.density <- NA
+df$Cattle.density <- NA
+
+for (dazzle in 1:nrow(df)) {
+  if (df[dazzle,"Species"]%in%zebra.abbr) {
+    df[dazzle,"Approximate.density"] <- df %>% filter(Species %in% zebra.abbr) %>%
+      mutate("Distance" = sqrt((GPS.x - df$GPS.x[dazzle])^2 + (GPS.y - df$GPS.y[dazzle])^2)) %>%
+      filter(Distance <= 1000, Date==df[dazzle,"Date"]) %>%
+      dplyr::select("Total.animals") %>% sum(na.rm=T)/pi
+  } else if (df[dazzle,"Species"]%in%cattle.abbr) {
+    df[dazzle,"Approximate.density"] <- df %>% filter(Species%in%cattle.abbr) %>%
+      mutate("Distance" = sqrt((GPS.x - df$GPS.x[dazzle])^2 + (GPS.y - df$GPS.y[dazzle])^2)) %>%
+      filter(Distance <= 1000, Date==df[dazzle,"Date"]) %>%
+      dplyr::select("Total.animals") %>% sum(na.rm=T)/pi
+  }
+  num.km <- 2
+  df[dazzle,"Cattle.density"] <- (df %>% filter(Species%in%cattle.abbr) %>%
+    mutate("Distance" = sqrt((GPS.x - df$GPS.x[dazzle])^2 + (GPS.y - df$GPS.y[dazzle])^2)) %>%
+    filter(Distance <= num.km*1000, Date==df[dazzle,"Date"]))[,"Total.animals"] %>%
+    sum(na.rm=T)/(pi*num.km^2)
+}
+cat("* Approximate and cattle density done\n")
 
 
 ####### DISTANCE TO CLOSEST HERD #######
@@ -354,20 +394,20 @@ df$Closest.herd.size <- NA
 df$Distance.from.herd.opp.sp <- NA
 df$Closest.herd.size.opp.sp <- NA
 
-zebras <- filter(df, QuickSpecies=="Cattle")
+zebras <- filter(df, Species%in%zebra.abbr)
 for (dazzle in 1:nrow(df)) {
   if (!(df[dazzle,"Species"]%in%zebra.abbr)) next
   zebra.s <- zebras
   zebra.s$DaysTillZebra <- time_length(interval(mdy(zebra.s$Date),mdy(df[dazzle,"Date"])),"day")
-  # + => cattle are before zebras; - => cattle are after after zebras
+  # + => cattle (zebras) are before zebras; - => cattle (zebras) are after after zebras
   zebra.s <- filter(zebra.s, DaysTillZebra<=days, DaysTillZebra>=0)
   
   if (nrow(zebra.s) == 0) next
   
   zebra.s.arr <- zebra.s %>% mutate("Distance" = sqrt((GPS.x - df$GPS.x[dazzle])^2 + (GPS.y - df$GPS.y[dazzle])^2)) %>%
-    arrange(Distance)
-  df[dazzle,"Distance.from.herd"] <- zebra.s.arr[2,"Distance"]
-  df[dazzle,"Closest.herd.size"] <- zebra.s.arr[2,"Total.animals"]
+    arrange(Distance) %>% filter(Distance > 0)
+  df[dazzle,"Distance.from.herd"] <- zebra.s.arr[1,"Distance"]
+  df[dazzle,"Closest.herd.size"] <- zebra.s.arr[1,"Total.animals"]
   
   if (df[dazzle,"Species"]=="GZ") opp.sp <- "PZ"
   if (df[dazzle,"Species"]=="PZ") opp.sp <- "GZ"
@@ -376,6 +416,32 @@ for (dazzle in 1:nrow(df)) {
   df[dazzle,"Closest.opp.sp.size"] <- zebra.s.arr.opp.sp[1,"Total.animals"]
 }
 cat("* Distance to herd etc. & opposite species done\n")
+
+
+####### ADD RANDOM NDVI, EVI #######
+library(reshape2)
+vi <- get_vi()
+
+vi$ID <- paste0(vi$Latitude,":",vi$Longitude)
+vi.sample <- melt(vi %>% dplyr::select(3,5,7,9,11) %>% sample_n(1000))
+colnames(vi.sample) <- c("ID","Date","NDVI")
+vi.sample$Date <- ymd(paste0("2021-",gsub("_","-",substr(vi.sample$Date,6,10))))
+vi.sample$Days <- days_since_start(vi.sample$Date)
+vi.sample$Species <- "Random"
+vi.lm <- lm(NDVI ~ Days, vi.sample)
+df$Random.NDVI <- vi.lm$coefficients['(Intercept)']+vi.lm$coefficients['Days']*df$Days
+cat("* Random NDVI done\n")
+
+# vi <- get_vi()
+# vi$ID <- paste0(vi$Latitude,":",vi$Longitude)
+# vi.sample <- melt(vi %>% dplyr::select(3,5,7,9,11) %>% sample_n(1000))
+# colnames(vi.sample) <- c("ID","Date","EVI")
+# vi.sample$Date <- ymd(paste0("2021-",gsub("_","-",substr(vi.sample$Date,6,10))))
+# vi.sample$Days <- days_since_start(vi.sample$Date)
+# vi.sample$Species <- "Random"
+# vi.lm <- lm(EVI ~ Days, vi.sample)
+# df$Random.EVI <- vi.lm$coefficients['(Intercept)']+vi.lm$coefficients['Days']*df$Days
+# cat("* Random NDVI done\n")
 
 
 ####### CONVERT DEGREES TO METERS #######
@@ -392,20 +458,10 @@ for (coln in colnames(df)) {
 cat("* NA to empty string done\n")
 
 
-####### ADD IDENTIFIER #######
-df$Identifier <- NA
-df[df$Species=="GZ","Identifier"] <- paste0("GZ",1:nrow(df[df$Species=="GZ",]))
-df[df$Species=="PZ","Identifier"] <- paste0("PZ",1:nrow(df[df$Species=="PZ",]))
-df[df$QuickSpecies=="Cattle","Identifier"] <- paste0("CT",1:nrow(df[df$QuickSpecies=="Cattle",]))
-df[df$QuickSpecies=="Camel","Identifier"] <- paste0("CM",1:nrow(df[df$QuickSpecies=="Camel",]))
-df[df$QuickSpecies=="SH","Identifier"] <- paste0("SH",1:nrow(df[df$QuickSpecies=="SH",]))
-
-
 
 ####### ORDER CSV #######
 df <- df %>% arrange(Photos.begin) 
 cat("* Data frame ordered\n")
-
 
 
 
@@ -415,6 +471,8 @@ cat("* Writing...\n")
 write.csv(df,paste0("/Users/maxgotts/Desktop/MPALA/Whitesheets/BACKUP/ConvertedWhitesheets_",
                         today(),".csv"), row.names=FALSE)
 write.csv(df,"/Users/maxgotts/Desktop/MPALA/Whitesheets/ConvertedWhitesheets.csv", row.names=FALSE)
+
+
 
 
 
@@ -481,3 +539,14 @@ if (FALSE) {
 
 
 #[order(df$Photos.begin),]
+
+
+# military_to_24 <- function(military) { # military is a number
+#   military_time <- paste0(military)
+#   split_military_time <- strsplit(military_time,"")[[1]]
+#   if (length(split_military_time) == 3) split_military_time <- c("0", split_military_time)
+#   split_hour24_time <- c(split_military_time[1], split_military_time[2], ":", split_military_time[3], split_military_time[4])
+#   if (split_hour24_time[1] == 0) split_hour24_time <- split_hour24_time[2:5]
+#   hour24_time <- paste(split_hour24_time, collapse = "")
+#   return(hour24_time)
+# }
