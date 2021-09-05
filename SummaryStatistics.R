@@ -90,12 +90,15 @@ fill_in_rows <- function(ss,df.day,species,weight_percent=F,weight_variable=F,sp
     ss[nrow(ss),all_names("distance.from.herd")] <- all_weighted(df.day.sp,"Distance.from.herd",weight_variable)
     
     ss[nrow(ss),all_names("distance.from.opp.herd")] <- all_weighted(df.day.sp,"Distance.from.herd.opp.sp",weight_variable)
-    ss[nrow(ss),all_names("distance.to.water")] <- all_weighted(df.day.sp,"Distance.to.water",weight_variable)
     ss[nrow(ss),all_names("distance.from.mob")] <- all_weighted(df.day.sp,"Distance.from.mob",weight_variable)
     ss[nrow(ss),all_names("cattle.density")] <- all_weighted(df.day.sp,"Cattle.density",weight_variable)
   
-    ss[nrow(ss),mean_sd_names("NDVI")] <- mean_sd_weighted(df.day.sp,"NDVI",weight_variable)
-    ss[nrow(ss),mean_sd_names("EVI")] <- mean_sd_weighted(df.day.sp,"EVI",weight_variable)
+    ss[nrow(ss),all_names("distance.to.water")] <- all_weighted(df.day.sp,"Distance.to.water",weight_variable)
+    ss[nrow(ss),all_names("midday.distance.to.water")] <- all_weighted(df.day.sp %>% filter(abs(Time-1200)<=100),"Distance.to.water",weight_variable)
+    
+    ss[nrow(ss),all_names("NDVI")] <- all_weighted(df.day.sp,"NDVI",weight_variable)
+    ss[nrow(ss),all_names("EVI")] <- all_weighted(df.day.sp,"EVI",weight_variable)
+    
     ss[nrow(ss),all_names("X.cover")] <- all_weighted(df.day.sp,"X.Cover",weight_variable)
     ss[nrow(ss),all_names("X.green")] <- all_weighted(df.day.sp,"X.Green",weight_variable)
     ss[nrow(ss),mean_sd_names("grass.height")] <- mean_sd_weighted(df.day.sp,"Average.Height",weight_variable)
@@ -124,6 +127,11 @@ fill_in_rows <- function(ss,df.day,species,weight_percent=F,weight_variable=F,sp
       if (cat == "") next
       ss[nrow(ss),paste0("X.",cat)] <- percentages_weighted(df.day.sp,"Bush.type",cat,weight_percent)
     }
+    for (cat in unique(df$Primary.habitat)) {
+      if (is.na(cat)) next
+      if (cat == "") next
+      ss[nrow(ss),paste0("X.",cat)] <- percentages_weighted(df.day.sp,"Primary.habitat",cat,weight_percent)
+    }
     for (cat in unique(df$Grass.height)) {
       if (is.na(cat)) next
       if (cat == "") next
@@ -148,10 +156,19 @@ for (species in unique(df$Species))
   ss[ss$Species==species,"Identifier"] <- paste0(find_replace(species,data.frame(x=c("PZ","GZ","Cattle","MC","CKC","CC"),y=c("PZ","GZ","CT","MC","CKC","CC"))),1:nrow(ss[ss$Species==species,]))
 
 ss$Date <- mdy(ss$Date)
+
 ss$Exp.1 <- "Not in experiment"
 ss[is.before(ss$Date,"2021-06-14"),"Exp.1"] <- "Before"
 ss[is.strictly.after(ss$Date,"2021-06-14") & is.strictly.before(ss$Date,"2021-06-19"), "Exp.1"] <- "During"
 ss[is.after(ss$Date,"2021-06-19") & is.before(ss$Date,"2021-07-05"),"Exp.1"] <- "After"
+
+
+ss$Exp.2 <- "Not in experiment"
+ss[is.before(ymd(ss$Date),ymd("2021-06-16")),"Exp.2"] <- "Before"
+ss[is.after(ymd(ss$Date),ymd("2021-06-17")),"Exp.2"] <- "After"
+
+
+
 
 ss$Date <- time_length(interval("2021-06-03",ss$Date),"day")+1
 colnames(ss)[2] <- "Days"

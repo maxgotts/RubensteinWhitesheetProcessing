@@ -418,6 +418,13 @@ for (dazzle in 1:nrow(df)) {
 cat("* Distance to herd etc. & opposite species done\n")
 
 
+####### DISTANCE TO CLOSEST HERD #######
+df$Distance.to.water <- sqrt((df$GPS.x-260184)^2 + (df$GPS.y-56014)^2)
+cat("* Distance to water done\n")
+
+
+
+
 ####### ADD RANDOM NDVI, EVI #######
 library(reshape2)
 vi <- get_vi()
@@ -445,7 +452,7 @@ cat("* Random NDVI done\n")
 
 
 ####### CONVERT DEGREES TO METERS #######
-df$Distance.to.water <- degrees_to_meters(df$Distance.to.water)
+# df$Distance.to.water <- degrees_to_meters(df$Distance.to.water)
 
 
 
